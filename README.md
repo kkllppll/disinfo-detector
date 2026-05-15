@@ -33,7 +33,7 @@
 
 - Python
 - Django
-- SQLite
+- PostgreSQL
 - SentenceTransformers
 - NetworkX
 - NumPy
