@@ -1,0 +1,180 @@
+﻿{% extends "dashboard/base.html" %}
+{% block title %}Групи — DisInfo Detector{% endblock %}
+{% block nav_groups %}active{% endblock %}
+
+{% block content %}
+<div class="dd-main">
+
+    <div class="dd-page-header">
+        <div>
+            <div class="dd-page-title">Скоординовані групи</div>
+            <div class="dd-page-sub">
+                Виявлено {{ groups|length }} груп з ознаками координації
+            </div>
+        </div>
+    </div>
+
+    <div class="dd-card" style="margin-bottom:14px;">
+        <div class="dd-card-head">
+            <div class="dd-card-title">
+                <div class="dd-dot dd-dot-purple"></div>
+                граф координації джерел
+            </div>
+        </div>
+
+        <div style="padding:10px;">
+            <svg id="networkGraph" width="100%" height="500"></svg>
+        </div>
+    </div>
+        </div>
+    </div>
+
+    {% if groups %}
+    <div style="display:flex; flex-direction:column; gap:8px;">
+        {% for group in groups %}
+        <div class="dd-card">
+            <div style="padding:14px 16px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                    <div>
+                        <div style="font-size:13px; font-weight:500; color:var(--text); margin-bottom:3px;">
+                            Група {{ forloop.counter }}
+                        </div>
+                        <div style="font-size:11px; color:var(--text-dim);">
+                            {{ group.description }}
+                        </div>
+                    </div>
+                    {% if group.risk_score > 0.85 %}
+                    <span class="dd-pill dd-pill-red">ризик {{ group.risk_score|floatformat:2 }}</span>
+                    {% elif group.risk_score > 0.70 %}
+                    <span class="dd-pill dd-pill-orange">ризик {{ group.risk_score|floatformat:2 }}</span>
+                    {% else %}
+                    <span class="dd-pill dd-pill-gray">ризик {{ group.risk_score|floatformat:2 }}</span>
+                    {% endif %}
+                </div>
+
+          
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+                    {% for source in group.sources.all %}
+                    <a href="{% url 'source_detail' source.pk %}"
+                       style="font-size:11px; background:var(--border); color:var(--text-muted);
+                              padding:3px 9px; border-radius:4px; text-decoration:none;
+                              border: 1px solid var(--border-light); transition: color 0.15s;"
+                       onmouseover="this.style.color='var(--text)'"
+                       onmouseout="this.style.color='var(--text-muted)'">
+                        {{ source.name }}
+                        {% if source.is_suspicious %}
+                        <span style="color:var(--red);">●</span>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+
+              
+                {% with sims=group.sources.all %}
+                <div style="font-size:11px; color:var(--text-dim);">
+                    виявлено {{ group.detected_at|date:"d.m.Y H:i" }}
+                </div>
+                {% endwith %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div style="text-align:center; padding:80px 0; color:var(--text-dim);">
+        <div style="font-size:32px; margin-bottom:12px; opacity:0.3;">◎</div>
+        <div style="font-size:14px; margin-bottom:6px;">Скоординованих груп не виявлено</div>
+        <div style="font-size:12px;">Запустіть <code style="color:var(--accent); background:var(--accent-dim); padding:2px 6px; border-radius:4px;">cluster_articles</code></div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+
+fetch('/graph-data/')
+.then(response => response.json())
+.then(data => {
+
+    const svg = d3.select("#networkGraph");
+
+    const width = svg.node().clientWidth;
+    const height = 500;
+
+    const simulation = d3.forceSimulation(data.nodes)
+        .force("link", d3.forceLink(data.links)
+            .id(d => d.id)
+            .distance(120))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    const link = svg.append("g")
+        .selectAll("line")
+        .data(data.links)
+        .enter()
+        .append("line")
+        .attr("stroke", "#a78bfa")
+        .attr("stroke-opacity", 0.9)
+        .attr("stroke-width", d => Math.max(d.weight * 4, 1.5));
+
+    const node = svg.append("g")
+        .selectAll("circle")
+        .data(data.nodes)
+        .enter()
+        .append("circle")
+        .attr("r", 10)
+        .attr("fill", d => d.suspicious ? "#ff8080" : "#b39dff")
+        .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended));
+
+    const label = svg.append("g")
+        .selectAll("text")
+        .data(data.nodes)
+        .enter()
+        .append("text")
+        .text(d => d.name)
+        .attr("font-size", "11px")
+        .attr("fill", "#ccc");
+
+    simulation.on("tick", () => {
+
+        link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+
+        node
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+
+        label
+            .attr("x", d => d.x + 14)
+            .attr("y", d => d.y + 4);
+    });
+
+    function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+
+});
+
+</script>
+{% endblock %}

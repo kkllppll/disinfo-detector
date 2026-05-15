@@ -1,0 +1,68 @@
+﻿{% extends "dashboard/base.html" %}
+{% block title %}Події — DisInfo Detector{% endblock %}
+{% block nav_events %}active{% endblock %}
+
+{% block content %}
+<div class="dd-main">
+    <div class="dd-page-header">
+        <div>
+            <div class="dd-page-title">Виявлені події</div>
+            <div class="dd-page-sub">Знайдено {{ events|length }} подій · кластеризація за схожістю текстів</div>
+        </div>
+    </div>
+
+    {% if events %}
+    <div style="display:flex; flex-direction:column; gap:8px;">
+        {% for event in events %}
+        <div class="dd-card" style="transition: border-color 0.15s;">
+            <div style="padding:14px 16px; display:flex; align-items:flex-start; gap:14px;">
+               
+                <div style="width:32px; height:32px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;
+                    background:{% if event.risk_score > 0.85 %}#2e1a1a{% elif event.risk_score > 0.75 %}#2a1e0e{% else %}#1a1a24{% endif %};">
+                    {% if event.risk_score > 0.85 %}
+                    <span style="font-size:14px; color:var(--red);">!</span>
+                    {% elif event.risk_score > 0.75 %}
+                    <span style="font-size:14px; color:var(--orange);">~</span>
+                    {% else %}
+                    <span style="font-size:14px; color:var(--text-dim);">·</span>
+                    {% endif %}
+                </div>
+
+                
+                <div style="flex:1; min-width:0;">
+                    <a href="{% url 'event_detail' event.pk %}"
+                       style="font-size:13px; color:var(--text); text-decoration:none; line-height:1.5; display:block; margin-bottom:6px;">
+                        {{ event.title|truncatechars:120 }}
+                    </a>
+                    <div style="display:flex; gap:14px; font-size:11px; color:var(--text-dim);">
+                        <span>{{ event.article_count }} статей</span>
+                        <span>{{ event.sources_count }} джерел</span>
+                        <span>{{ event.created_at|timesince }} тому</span>
+                    </div>
+                </div>
+
+                
+                <div style="text-align:right; flex-shrink:0;">
+                    {% if event.risk_score > 0.85 %}
+                    <span class="dd-pill dd-pill-red">високий ризик</span>
+                    {% elif event.risk_score > 0.75 %}
+                    <span class="dd-pill dd-pill-orange">середній ризик</span>
+                    {% else %}
+                    <span class="dd-pill dd-pill-gray">низький ризик</span>
+                    {% endif %}
+                    <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">{{ event.risk_score|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div style="text-align:center; padding:80px 0; color:var(--text-dim);">
+        <div style="font-size:32px; margin-bottom:12px; opacity:0.3;">◎</div>
+        <div style="font-size:14px; margin-bottom:6px;">Подій ще не виявлено</div>
+        <div style="font-size:12px;">Запустіть аналіз командою <code style="color:var(--accent); background:var(--accent-dim); padding:2px 6px; border-radius:4px;">cluster_articles</code></div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

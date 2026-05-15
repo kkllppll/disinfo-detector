@@ -1,0 +1,37 @@
+﻿{% extends "dashboard/base.html" %}
+{% block title %}Вхід — DisInfo Detector{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:center; min-height:calc(100vh - 100px);">
+    <div style="width:360px;">
+        <div style="text-align:center; margin-bottom:24px;">
+            <div style="width:40px; height:40px; border-radius:10px; background:var(--accent-dim);
+                        border:1px solid var(--accent-border); display:inline-flex;
+                        align-items:center; justify-content:center; margin-bottom:12px;">
+                <span style="font-size:16px; color:var(--accent);">◉</span>
+            </div>
+            <div style="font-size:15px; font-weight:500; color:var(--text); margin-bottom:4px;">Вхід для аналітиків</div>
+            <div style="font-size:12px; color:var(--text-dim);">DisInfo Detector захищений доступ</div>
+        </div>
+
+        <div class="dd-card"> 
+            <div style="padding:24px;">
+                <form method="post">
+                    {% csrf_token %}
+                    <div style="margin-bottom:16px;">
+                        <label class="dd-label">Логін</label>
+                        <input type="text" name="username" class="dd-input" placeholder="username" required autofocus>
+                    </div>
+                    <div style="margin-bottom:20px;">
+                        <label class="dd-label">Пароль</label>
+                        <input type="password" name="password" class="dd-input" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="dd-btn" style="width:100%; justify-content:center;">
+                        Увійти
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

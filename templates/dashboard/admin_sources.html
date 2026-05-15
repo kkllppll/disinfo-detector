@@ -1,0 +1,75 @@
+﻿{% extends "dashboard/base.html" %}
+{% block title %}Керування джерелами{% endblock %}
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-2">
+        <div class="sidebar p-3">
+            <p class="text-muted small text-uppercase fw-bold mb-2">Адмін меню</p>
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{% url 'admin_panel' %}"><i class="bi bi-speedometer2"></i> Огляд</a>
+                <a class="nav-link active" href="{% url 'admin_sources' %}"><i class="bi bi-rss"></i> RSS Джерела</a>
+            </nav>
+        </div>
+    </div>
+    <div class="col-md-10 p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4><i class="bi bi-rss"></i> RSS Джерела</h4>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSourceModal"><i class="bi bi-plus"></i> Додати</button>
+        </div>
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>Назва</th><th>RSS URL</th><th>Статус</th><th>Дії</th></tr></thead>
+                    <tbody>
+                        {% for source in sources %}
+                        <tr>
+                            <td>{{ source.name }}</td>
+                            <td>
+                                <a href="{{ source.rss_url }}" target="_blank">
+                                    {{ source.rss_url|truncatechars:50 }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if source.is_active %}
+                                <span class="badge bg-success">Активне</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Вимкнене</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ source.article_count }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted p-4">
+                                Джерел ще не додано
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="addSourceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Додати RSS джерело</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Назва</label><input type="text" class="form-control bg-dark text-light border-secondary" placeholder="Укрінформ"></div>
+                <div class="mb-3"><label class="form-label">URL сайту</label><input type="url" class="form-control bg-dark text-light border-secondary"></div>
+                <div class="mb-3"><label class="form-label">RSS URL</label><input type="url" class="form-control bg-dark text-light border-secondary"></div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary">Додати</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

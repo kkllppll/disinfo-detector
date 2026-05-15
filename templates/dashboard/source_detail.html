@@ -1,0 +1,139 @@
+﻿{% extends "dashboard/base.html" %}
+{% block title %}{{ source.name }} — DisInfo Detector{% endblock %}
+{% block nav_sources %}active{% endblock %}
+
+{% block content %}
+<div class="dd-main">
+    <div style="margin-bottom:16px;">
+        <a href="{% url 'sources' %}" style="font-size:12px; color:var(--text-dim); text-decoration:none;">
+            ← назад до джерел
+        </a>
+    </div>
+
+    <div style="display:grid; grid-template-columns:300px 1fr; gap:12px;">
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="dd-card">
+                <div class="dd-card-head">
+                    <div class="dd-card-title">
+                        <div class="dd-dot dd-dot-purple"></div>
+                        {{ source.name }}
+                    </div>
+                </div>
+                <div style="padding:16px; display:flex; flex-direction:column; gap:14px;">
+
+                    <div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:4px;">категорія</div>
+                        <span class="dd-badge
+                            {% if source.category == 'state' %}dd-badge-green
+                            {% elif source.category == 'quality' %}dd-badge-blue
+                            {% elif source.category == 'tabloid' %}dd-badge-red
+                            {% elif source.category == 'regional' %}dd-badge-gray
+                            {% else %}dd-badge-purple{% endif %}">
+                            {{ source.get_category_display }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">рейтинг довіри</div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div class="dd-progress" style="flex:1;">
+                                <div class="dd-progress-bar"
+                                     style="width:{{ source.reliability_score }}%;
+                                     background:{% if source.reliability_score > 70 %}var(--green){% elif source.reliability_score > 40 %}var(--orange){% else %}var(--red){% endif %};">
+                                </div>
+                            </div>
+                            <span style="font-size:13px; font-weight:500; color:var(--text);">{{ source.reliability_score|floatformat:0 }}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:4px;">статус</div>
+                        {% if source.is_suspicious %}
+                        <span class="dd-pill dd-pill-red">підозріле</span>
+                        {% else %}
+                        <span class="dd-pill dd-pill-green">норма</span>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:4px;">статей зібрано</div>
+                        <div style="font-size:20px; font-weight:500; color:var(--accent);">{{ articles|length }}</div>
+                    </div>
+
+                    <div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:4px;">сайт</div>
+                        <a href="{{ source.url }}" target="_blank"
+                           style="font-size:12px; color:var(--blue); text-decoration:none;">
+                            {{ source.url|truncatechars:35 }} ↗
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            {% if source.network_metrics %}
+            <div class="dd-card">
+                <div class="dd-card-head">
+                    <div class="dd-card-title">
+                        <div class="dd-dot dd-dot-blue"></div>
+                        мережеві метрики
+                    </div>
+                </div>
+                <div style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+                    <div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:3px;">degree centrality</div>
+                        <div style="font-size:18px; font-weight:500; color:var(--accent);">
+                            {{ source.network_metrics.degree_centrality|floatformat:4 }}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:3px;">betweenness centrality</div>
+                        <div style="font-size:18px; font-weight:500; color:var(--blue);">
+                            {{ source.network_metrics.betweenness_centrality|floatformat:4 }}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:3px;">зв'язків у графі</div>
+                        <div style="font-size:18px; font-weight:500; color:var(--text-muted);">
+                            {{ source.network_metrics.connections_count }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="dd-card">
+            <div class="dd-card-head">
+                <div class="dd-card-title">
+                    <div class="dd-dot dd-dot-purple"></div>
+                    останні статті
+                </div>
+                <span style="font-size:11px; color:var(--text-dim);">{{ articles|length }} всього</span>
+            </div>
+            {% if articles %}
+            {% for article in articles %}
+            <div class="dd-list-item">
+                <a href="{{ article.url }}" target="_blank"
+                   style="font-size:13px; color:var(--text); text-decoration:none; display:block; margin-bottom:5px; line-height:1.45;">
+                    {{ article.title|truncatechars:110 }}
+                </a>
+                <div style="display:flex; gap:10px; font-size:11px; color:var(--text-dim);">
+                    {% if article.published_at %}
+                    <span>{{ article.published_at|date:"d.m.Y H:i" }}</span>
+                    {% endif %}
+                    {% if article.is_processed %}
+                    <span class="dd-badge dd-badge-purple">nlp</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div style="padding:40px; text-align:center; color:var(--text-dim);">Статей ще немає</div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+﻿{% extends "dashboard/base.html" %}
+{% block title %}Джерела — DisInfo Detector{% endblock %}
+{% block nav_sources %}active{% endblock %}
+
+{% block content %}
+<div class="dd-main">
+    <div class="dd-page-header">
+        <div>
+            <div class="dd-page-title">Джерела</div>
+            <div class="dd-page-sub">{{ sources|length }} джерел у моніторингу</div>
+        </div>
+    </div>
+
+    <div class="dd-card">
+        <table class="dd-table">
+            <thead>
+                <tr>
+                    <th>Джерело</th>
+                    <th>Категорія</th>
+                    <th>Статей</th>
+                    <th>Рейтинг довіри</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for source in sources %}
+                <tr style="cursor:pointer;" onclick="window.location='{% url 'source_detail' source.pk %}'">
+                    <td>
+                        <div style="font-weight:500; color:var(--text);">{{ source.name }}</div>
+                        <div style="font-size:11px; color:var(--text-dim);">
+                            <a href="{{ source.url }}" target="_blank" onclick="event.stopPropagation();"
+                               style="color:var(--text-dim); text-decoration:none;">{{ source.url|truncatechars:40 }}</a>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="dd-badge
+                            {% if source.category == 'state' %}dd-badge-green
+                            {% elif source.category == 'quality' %}dd-badge-blue
+                            {% elif source.category == 'tabloid' %}dd-badge-red
+                            {% elif source.category == 'regional' %}dd-badge-gray
+                            {% else %}dd-badge-purple{% endif %}">
+                            {{ source.get_category_display }}
+                        </span>
+                    </td>
+                    <td style="color:var(--text-muted);">{{ source.articles.count }}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div class="dd-progress" style="width:80px;">
+                                <div class="dd-progress-bar"
+                                     style="width:{{ source.reliability_score }}%;
+                                     background:{% if source.reliability_score > 70 %}var(--green){% elif source.reliability_score > 40 %}var(--orange){% else %}var(--red){% endif %};">
+                                </div>
+                            </div>
+                            <span style="font-size:12px; color:var(--text-muted);">{{ source.reliability_score|floatformat:0 }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if source.is_suspicious %}
+                        <span class="dd-pill dd-pill-red">підозріле</span>
+                        {% else %}
+                        <span class="dd-pill dd-pill-green">норма</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align:center; color:var(--text-dim); padding:40px;">
+                        Джерел ще немає
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
